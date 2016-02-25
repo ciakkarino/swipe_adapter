@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRowAdapter.S
         mRv.setLayoutManager(lm);
         ArrayList<String> mList = new ArrayList<>();
         for(int i = 0; i<50; i++){
-            mList.add("Element " + i+1);
+            mList.add("Element " + (i+1));
         }
         MyAdapter adapter = new MyAdapter(this,this,lm,mList);
         mRv.setAdapter(adapter);

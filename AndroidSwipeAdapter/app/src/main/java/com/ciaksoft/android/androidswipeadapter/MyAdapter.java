@@ -54,11 +54,6 @@ public class MyAdapter extends SwipeRowAdapter<MyAdapter.MyHolder>{
     }
 
     @Override
-    protected int getOnTouchRowPanelId() {
-        return R.id.touch_panel;
-    }
-
-    @Override
     protected int getSwipeRowContainerId() {
         return R.id.container;
     }

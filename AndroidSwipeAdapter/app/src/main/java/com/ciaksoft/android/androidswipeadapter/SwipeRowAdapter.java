@@ -42,9 +42,12 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
             super(itemView);
             mHolderAdapter = adapter;
             mHolderListener = listener;
-            if(mHolderAdapter.getOnTouchRowPanelId() > 0){
-                itemView.findViewById(mHolderAdapter.getOnTouchRowPanelId()).setOnTouchListener(this);
-            }
+            itemView.setOnTouchListener(this);
+            adapter.doStopSwipe(getAdapterPosition(),itemView,true);
+        }
+
+        public void preBindViewHolder(){
+            mHolderAdapter.doStopSwipe(getAdapterPosition(),itemView,true);
         }
 
         @Override
@@ -147,15 +150,6 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
      *
      * @return
      */
-    protected int getOnTouchRowPanelId() {
-        return 0;
-    }
-
-    /**
-     * You must override this method if you want move your row with on touch
-     *
-     * @return
-     */
     protected int getSwipeRowContainerId() {
         return 0;
     }
@@ -227,6 +221,7 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
 
     @Override
     public void onBindViewHolder(SwipeRowAdapterHolder holder, int position) {
+        holder.preBindViewHolder();
         onBindSwipeViewHolder((T)holder,position);
     }
 
@@ -256,6 +251,20 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
     }
 
     /**
+     * Get the row view by list position
+     * @param listPosition
+     * @return
+     */
+    private View getViewRowByListPosition(int listPosition){
+        int diff = listPosition;
+        if (listPosition != this.mLayouManager.findFirstVisibleItemPosition()) {
+            diff = listPosition - this.mLayouManager.findFirstVisibleItemPosition();
+        }
+        View child = this.mLayouManager.getChildAt(diff);
+        return child;
+    }
+
+    /**
      * @param v
      * @param event
      * @return
@@ -280,7 +289,6 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
             //get swipe bottom view
             View bottomScroll = child.findViewById(getSwipeBottomViewId());
             //get select action view
-            View rowTouchPanel = child.findViewById(getOnTouchRowPanelId());
             View scrollLeftSelectActionView = child.findViewById(getSwipeRowLeftSelectActionId());
             View scrollRightSelectActionView = child.findViewById(getSwipeRowRightSelectActionId());
             if ((scrollLeftSelectActionView != null && scrollLeftSelectActionView.getVisibility() == View.VISIBLE) ||
@@ -318,7 +326,7 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
                         listener.ignoreClick = false;
                         listener.currentX = tmpX;
                         if (getSelectedLineColorId() != 0) {
-                            rowTouchPanel.setBackgroundColor(getSelectedLineColor());
+                            child.setBackgroundColor(getSelectedLineColor());
                         }
                         break;
                     case MotionEvent.ACTION_MOVE:
@@ -345,7 +353,7 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        rowTouchPanel.setBackgroundColor(trasparent);
+                        child.setBackgroundColor(trasparent);
                         if (container.getX() != 0) {
                             listener.ignoreClick = true;
                         }
@@ -480,6 +488,42 @@ public abstract class SwipeRowAdapter<T extends SwipeRowAdapter.SwipeRowAdapterH
         }
     }
 
+    /**
+     * Compute left swipe
+     * @param listPosition
+     */
+    public void doLeftSwipe(int listPosition){
+        if (mSwipeTouchSupport != null) {
+            mSwipeTouchSupport.onLeftSwipe(listPosition,getViewRowByListPosition(listPosition).findViewById(getSwipeRowContainerId()));
+        }
+    }
+
+    /**
+     * Compute right swipe
+     * @param listPosition
+     */
+    public void doRightSwipe(int listPosition){
+        if (mSwipeTouchSupport != null) {
+            mSwipeTouchSupport.onRightSwipe(listPosition,getViewRowByListPosition(listPosition).findViewById(getSwipeRowContainerId()));
+        }
+    }
+
+    /**
+     * Adjust view in its original position
+     * @param listPosition
+     * @param withoutAnimation
+     */
+    public void doStopSwipe(int listPosition,boolean withoutAnimation){
+        if (mSwipeTouchSupport != null) {
+            mSwipeTouchSupport.onSwipeStopped(listPosition,getViewRowByListPosition(listPosition).findViewById(getSwipeRowContainerId()),withoutAnimation);
+        }
+    }
+
+    public void doStopSwipe(int position, View view, boolean withoutAnimation){
+        if (mSwipeTouchSupport != null) {
+            mSwipeTouchSupport.onSwipeStopped(position,view.findViewById(getSwipeRowContainerId()),withoutAnimation);
+        }
+    }
 
     /**
      * Utility class that implements onTouch listener and provide all functions to manage the row swipe animation
